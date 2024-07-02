@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema({
     },
     otp: String,
     otpExpires: Date,
+    profileImage: {
+        type: String,
+        default: '',
+    }, // New field for profile image URL
+    role: {
+        type: String,
+        required: true,
+    },
 }, {
     timestamps: true,
 });

@@ -1,26 +1,41 @@
 // controllers/authController.js
 const session = require('express-session');
+// controllers/authController.js
 const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const sendEmail = require('../utils/sendEmail');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const cloudinary = require('../config/Cloudinary');
 
 exports.registerUser = async (req, res, next) => {
     try {
-        const { username, email, password } = req.body;
-        console.log(req.body, "body");
+        const { username, email, password, role } = req.body;
+        const profileImageFile = req.file; // Assuming you're using multer to handle file upload
+
         // Check if the username already exists
         const usernameExists = await User.findOne({ username });
         if (usernameExists) {
             return res.status(400).json({ message: 'Username already taken' });
         }
+
         // Check if the email already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: 'User already exists' });
         }
-        const user = await User.create({ username, email, password });
+
+        // Upload profile image to Cloudinary
+        let profileImageUrl = '';
+        if (profileImageFile) {
+            const result = await cloudinary.uploader.upload(profileImageFile.path, {
+                folder: 'UserProfiles',
+            });
+            profileImageUrl = result.secure_url;
+        }
+
+        const user = await User.create({ username, email, password, profileImage: profileImageUrl, role });
+
         if (user) {
             const otp = crypto.randomBytes(3).toString('hex');
             const hashedOtp = await bcrypt.hash(otp, 10);
@@ -42,6 +57,7 @@ exports.registerUser = async (req, res, next) => {
         next(error);
     }
 };
+
 
 exports.verifyOTP = async (req, res, next) => {
     try {
