@@ -7,7 +7,6 @@ const sendEmail = require('../utils/sendEmail');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const cloudinary = require('../config/Cloudinary');
-
 exports.registerUser = async (req, res, next) => {
     try {
         const { username, email, password, role } = req.body;
@@ -34,7 +33,10 @@ exports.registerUser = async (req, res, next) => {
             profileImageUrl = result.secure_url;
         }
 
-        const user = await User.create({ username, email, password, profileImage: profileImageUrl, role });
+        // Generate a unique API Key
+        const apiKey = crypto.randomBytes(32).toString('hex');
+
+        const user = await User.create({ username, email, password, profileImage: profileImageUrl, role, apikey: apiKey });
 
         if (user) {
             const otp = crypto.randomBytes(3).toString('hex');
@@ -42,6 +44,7 @@ exports.registerUser = async (req, res, next) => {
             user.otp = hashedOtp;
             await user.save();
 
+            // Send email with OTP
             await sendEmail({
                 email: user.email,
                 subject: 'OTP for Email Verification',
