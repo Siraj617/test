@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 const express = require('express');
-const { registerUser, verifyOTP, authUser, logoutUser } = require('../controller/authController');
+const { registerUser, verifyOTP, authUser, logoutUser } = require('../controller/authcontroller');
 const { validateRegister, validateLogin } = require('../middlewares/validation');
 const limiter = require('../middlewares/rateLimiter');
 const { protect } = require('../middlewares/authMiddleware');
