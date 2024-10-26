@@ -70,7 +70,7 @@ const csrfProtection = csurf({
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'Strict' // Or 'Lax' based on your needs
+      sameSite: 'lax' // Or 'Lax' based on your needs
     }
   });
   app.use(csrfProtection);
