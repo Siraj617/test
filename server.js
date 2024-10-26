@@ -11,6 +11,8 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const xss = require('xss-clean');
 const csurf = require('csurf');
+const { Server } = require('socket.io');
+const socketHandler = require('./socket');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const limiter = require('./middlewares/rateLimiter');
 
@@ -40,6 +42,7 @@ app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ["GET", "POST", "DELETE", "PUT"],
+    allowedHeaders: ['Content-Type', 'csrf-token'],
 
 }));
 
@@ -52,7 +55,7 @@ app.use(
         saveUninitialized: false,
         store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }), // Corrected MongoStore configuration
         cookie: {
-            secure: process.env.NODE_ENV === 'production',
+            secure:false,
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,  // 1 week
         },
@@ -66,15 +69,7 @@ app.use((req, res, next) => {
 });
 
 // CSRF protection middleware
-const csrfProtection = csurf({
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // true in production
-      sameSite: 'lax' // Or 'Lax' based on your needs
-    }
-  });
-  app.use(csrfProtection);
-  
+const csrfProtection = csurf({ cookie: true });
 app.use(csrfProtection);
 
 // Rate limiter middleware
@@ -92,7 +87,17 @@ app.get('/api/csrf-token', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
+// const server = require('http').createServer(app);
+// const io = new Server(server, {
+//     cors: {
+//         origin: "http://localhost:3000", // Your frontend URL
+//         methods: ["GET", "POST", "DELETE", "PUT"],
+//         credentials: true,
+//     },
+// });
 
+// // Your socket handling code
+// socketHandler(io);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
