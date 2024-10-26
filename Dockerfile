@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # App run panna port expose pannudhu
-EXPOSE 3000
+EXPOSE 5000
 
 # Start command
-CMD ["node", "index.js"]
+CMD ["node", "server.js"]
