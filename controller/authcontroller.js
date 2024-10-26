@@ -96,6 +96,7 @@ exports.authUser = async (req, res, next) => {
         if (user && (await user.matchPassword(password))) {
             req.session.userId = user._id;
             req.session.username = user.username;
+            req.session.save(); // Explicitly save the session
             console.log('Session Details:', req.session);
 
             res.json({
