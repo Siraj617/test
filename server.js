@@ -11,8 +11,6 @@ const helmet = require('helmet');
 const hpp = require('hpp');
 const xss = require('xss-clean');
 const csurf = require('csurf');
-const { Server } = require('socket.io');
-const socketHandler = require('./socket');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const limiter = require('./middlewares/rateLimiter');
 
@@ -94,17 +92,7 @@ app.get('/api/csrf-token', (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// const server = require('http').createServer(app);
-// const io = new Server(server, {
-//     cors: {
-//         origin: "http://localhost:3000", // Your frontend URL
-//         methods: ["GET", "POST", "DELETE", "PUT"],
-//         credentials: true,
-//     },
-// });
 
-// // Your socket handling code
-// socketHandler(io);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
