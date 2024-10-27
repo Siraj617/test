@@ -55,7 +55,7 @@ app.use(
         saveUninitialized: false,
         store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }), // Corrected MongoStore configuration
         cookie: {
-            secure:false,
+            secure:true,
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,  // 1 week
         },
