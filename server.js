@@ -69,6 +69,11 @@ app.use((req, res, next) => {
 // Rate limiter middleware
 app.use('/api/', limiter);
 
+app.get('/', (req, res) => {
+    res.send("working microservice")
+})
+
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
