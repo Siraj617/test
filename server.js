@@ -12,7 +12,7 @@ const hpp = require('hpp');
 const xss = require('xss-clean');
 const csurf = require('csurf');
 const { Server } = require('socket.io');
-const socketHandler = require('./socket');
+// const socketHandler = require('./socket');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const limiter = require('./middlewares/rateLimiter');
 
