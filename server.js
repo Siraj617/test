@@ -42,7 +42,7 @@ app.use(cors({
     origin: ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ["GET", "POST", "DELETE", "PUT"],
-    allowedHeaders: ['Content-Type', 'csrf-token'],
+    allowedHeaders: ['Content-Type', 'csrf-token', 'X-CSRF-Token'],
 
 }));
 
