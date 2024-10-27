@@ -1,4 +1,3 @@
-// routes/authRoutes.js
 const express = require('express');
 const {
     registerUser, verifyOTP, authUser, logoutUser,
@@ -11,16 +10,6 @@ const limiter = require('../middlewares/rateLimiter');
 const upload = require('../middlewares/Upload');
 
 const router = express.Router();
-
-// CSRF Protection Middleware - Apply once at the router level
-const csurf = require('csurf');
-const csrfProtection = csurf({ cookie: { httpOnly: true, secure: process.env.NODE_ENV === 'production' } });
-router.use(csrfProtection);
-
-// CSRF Token Route (for frontend to retrieve CSRF token)
-router.get('/csrf-token', (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-});
 
 // Register Route with file upload middleware
 router.post('/register', limiter, upload.single('profileImage'), validateRegister, registerUser);
@@ -48,11 +37,11 @@ router.post('/updateGitrepo', updateGitrepo);
 // Chat Routes
 router.get('/chatusers', getUsers);
 router.post('/messages', sendMessage);
-router.get('/messages', getMessages); // Use GET for fetching messages
+router.get('/messages', getMessages);
 
 // Admin Routes
 router.get('/admingetusers', getAllUsers);
 router.post('/admincreateusers', createUser);
-router.delete('/admindeleteusers/:id', deleteUser); // CSRF protection is handled globally
+router.delete('/admindeleteusers/:id', deleteUser);
 
 module.exports = router;
