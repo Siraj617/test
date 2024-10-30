@@ -36,12 +36,14 @@ app.use(hpp());
 app.use(xss());
 
 app.use(express.json());
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
-    credentials: true,
-    methods: ["GET", "POST", "DELETE", "PUT"],
-    allowedHeaders: ['Content-Type'],
+    origin: '*', // Allows all domains
+    credentials: true, // Enable cookies with CORS
+    methods: ["GET", "POST", "DELETE", "PUT", "PATCH"], // Add more methods if needed
+    allowedHeaders: ['*'], // Allows all headers
 }));
+
 
 app.use(cookieParser());
 
