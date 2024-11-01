@@ -35,20 +35,23 @@ app.use(
 app.use(hpp());
 app.use(xss());
 
-// Configure CORS to allow frontend access
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? ['http://localhost:3000'] 
-        : ['http://localhost:3000', 'http://localhost:3001'],
+// CORS configuration for live and local environments
+const corsOptions = {
+    origin: [
+        'https://e-workspace-peach.vercel.app',
+        'http://localhost:3000',
+        'http://localhost:3001',
+    ],
     credentials: true,
-    methods: ["GET", "POST", "DELETE", "PUT"],
+    methods: ['GET', 'POST', 'DELETE', 'PUT'],
     allowedHeaders: ['Content-Type', 'csrf-token'],
-}));
+};
+app.use(cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
 
-// Session middleware with MongoStore and secure cookie settings
+// Session configuration
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
@@ -56,46 +59,56 @@ app.use(
         saveUninitialized: false,
         store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
         cookie: {
-            secure: process.env.NODE_ENV === 'production', // Only secure in production
+            secure: process.env.NODE_ENV === 'production',
             httpOnly: true,
-            maxAge: 7 * 24 * 60 * 60 * 1000,  // 1 week
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            sameSite: 'none', // Ensures compatibility in cross-origin requests
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
         },
     })
 );
 
-// Logging middleware for session details
-app.use((req, res, next) => {
-    console.log("Session Details:", req.session); // Log the session details
-    next();
-});
-
-// CSRF protection middleware
-app.use(csurf({
+// CSRF protection middleware configuration
+const csrfProtection = csurf({
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    }
-}));
+        sameSite: 'none',
+    },
+});
+app.use(csrfProtection);
+
+// Log CSRF token for debugging
+app.use((req, res, next) => {
+    console.log('Session Details:', req.session);
+    console.log('CSRF Token:', req.csrfToken());
+    res.cookie('XSRF-TOKEN', req.csrfToken(), {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+    });
+    next();
+});
 
 // Rate limiter middleware
 app.use('/api/', limiter);
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/', authRoutes);
 app.use('/api/protected', protectedRoutes);
 
-// CSRF token route
+// CSRF token route for frontend retrieval
 app.get('/api/csrf-token', (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
+    const csrfToken = req.csrfToken();
+    res.cookie('XSRF-TOKEN', csrfToken, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+    });
+    res.json({ csrfToken });
 });
 
-// Custom error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
-// Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
