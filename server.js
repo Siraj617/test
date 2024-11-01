@@ -4,15 +4,13 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const protectedRoutes = require('./routes/protectedRoutes');
 const session = require('express-session');
-const MongoStore = require('connect-mongo'); // Correct import for MongoStore
+const MongoStore = require('connect-mongo');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const hpp = require('hpp');
 const xss = require('xss-clean');
 const csurf = require('csurf');
-const { Server } = require('socket.io');
-// const socketHandler = require('./socket');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const limiter = require('./middlewares/rateLimiter');
 
@@ -37,40 +35,49 @@ app.use(
 app.use(hpp());
 app.use(xss());
 
-app.use(express.json());
+// Configure CORS to allow frontend access
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.NODE_ENV === 'production' 
+        ? ['http://localhost:3000'] 
+        : ['http://localhost:3000', 'http://localhost:3001'],
     credentials: true,
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: ['Content-Type', 'csrf-token'],
-
 }));
 
+app.use(express.json());
 app.use(cookieParser());
 
+// Session middleware with MongoStore and secure cookie settings
 app.use(
     session({
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: false,
-        store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }), // Corrected MongoStore configuration
+        store: MongoStore.create({ mongoUrl: process.env.MONGO_URI }),
         cookie: {
-            secure:false,
+            secure: process.env.NODE_ENV === 'production', // Only secure in production
             httpOnly: true,
             maxAge: 7 * 24 * 60 * 60 * 1000,  // 1 week
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         },
     })
 );
 
 // Logging middleware for session details
 app.use((req, res, next) => {
-    console.log("Session Detailssss:", req.session); // Log the session details
-    next(); // Call the next middleware or route handler
+    console.log("Session Details:", req.session); // Log the session details
+    next();
 });
 
 // CSRF protection middleware
-const csrfProtection = csurf({ cookie: true });
-app.use(csrfProtection);
+app.use(csurf({
+    cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    }
+}));
 
 // Rate limiter middleware
 app.use('/api/', limiter);
@@ -80,24 +87,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/', authRoutes);
 app.use('/api/protected', protectedRoutes);
 
+// CSRF token route
 app.get('/api/csrf-token', (req, res) => {
     res.json({ csrfToken: req.csrfToken() });
 });
 
+// Custom error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
-// const server = require('http').createServer(app);
-// const io = new Server(server, {
-//     cors: {
-//         origin: "http://localhost:3000", // Your frontend URL
-//         methods: ["GET", "POST", "DELETE", "PUT"],
-//         credentials: true,
-//     },
-// });
-
-// // Your socket handling code
-// socketHandler(io);
-
+// Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
