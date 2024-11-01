@@ -1,63 +1,60 @@
+// routes/authRoutes.js
 const express = require('express');
-const {
-    registerUser, verifyOTP, authUser, logoutUser,
-    getAllTasks, StoreTask, updateDescription, updateGitrepo,
-    getUsers, sendMessage, getMessages, getAllUsers,
-    createUser, deleteUser
-} = require('../controller/authcontroller');
+const { registerUser, verifyOTP, authUser, logoutUser, getAllTasks, StoreTask, updateDescription, updateGitrepo, getUsers, sendMessage, getMessages, getAllUsers, createUser, deleteUser } = require('../controller/authcontroller');
 const { validateRegister, validateLogin } = require('../middlewares/validation');
 const limiter = require('../middlewares/rateLimiter');
 const { protect } = require('../middlewares/authMiddleware');
-const csurf = require('csurf'); 
-const upload = require('../middlewares/Upload'); 
+const csurf = require('csurf');  // Import csurf middleware
+const upload = require('../middlewares/Upload'); // Import multer middleware
 
 const router = express.Router();
 
-// CSRF protection setup
+// Log CSRF token for debugging
+router.use((req, res, next) => {
+    console.log('CSRF Token:', req.csrfToken());
+    next();
+});
+
+// CSRF protection middleware for all routes
 const csrfProtection = csurf({
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     }
 });
-
-// Route to fetch CSRF token
-router.get('/csrf-token', csrfProtection, (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-});
+router.use(csrfProtection);
 
 // Register Route with file upload middleware
-router.post('/register', limiter, upload.single('profileImage'), validateRegister, csrfProtection, registerUser);
+router.post('/register', limiter, upload.single('profileImage'), validateRegister, registerUser);
 
 // Verify OTP Route
-router.post('/verify-otp', limiter, csrfProtection, verifyOTP);
+router.post('/verify-otp', limiter, verifyOTP);
 
 // Login Route
-router.post('/login', limiter, validateLogin,csrfProtection, authUser);
+router.post('/login', limiter, csrfProtection, validateLogin, authUser);
 
 // Logout Route
-router.post('/logout', limiter, csrfProtection, logoutUser);
+router.post('/logout', limiter, logoutUser);
 
-// Test Route (for basic connection testing)
+// Test Route
 router.get('/test', (req, res) => {
     res.send('Test route');
 });
 
-// Protected routes (tasks, description updates, etc.)
-router.get('/tasks', csrfProtection, getAllTasks);
-router.post('/tasks', csrfProtection, StoreTask);
-router.post('/updatedescription', csrfProtection, updateDescription);
-router.post('/updateGitrepo', csrfProtection, updateGitrepo);
+// Additional routes
+router.get('/tasks', getAllTasks);
+router.post('/tasks', StoreTask);
+router.post('/updatedescription', updateDescription);
+router.post('/updateGitrepo', updateGitrepo);
 
-// Chat routes
-router.get('/chatusers', csrfProtection, getUsers);
-router.post('/messages', csrfProtection, sendMessage);
-router.get('/messages', csrfProtection, getMessages);
+// Chatapp routes
+router.get('/chatusers', getUsers);
+router.post('/messages', sendMessage);
+router.get('/messages', getMessages); // Use GET for fetching messages
 
-// Admin routes for user management
-router.get('/admingetusers', csrfProtection, getAllUsers);
-router.post('/admincreateusers', csrfProtection, createUser);
+// Admin routes with CSRF protection on delete
+router.get('/admingetusers', getAllUsers);
+router.post('/admincreateusers', createUser);
 router.delete('/admindeleteusers/:id', csrfProtection, deleteUser);
 
 module.exports = router;
