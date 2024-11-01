@@ -28,13 +28,13 @@ router.get('/csrf-token', csrfProtection, (req, res) => {
 });
 
 // Register Route with file upload middleware
-router.post('/register', limiter, upload.single('profileImage'), validateRegister, csrfProtection, registerUser);
+router.post('/register', limiter, upload.single('profileImage'), validateRegister,  registerUser);
 
 // Verify OTP Route
 router.post('/verify-otp', limiter, csrfProtection, verifyOTP);
 
 // Login Route
-router.post('/login', limiter, csrfProtection, validateLogin, authUser);
+router.post('/login', limiter, validateLogin, authUser);
 
 // Logout Route
 router.post('/logout', limiter, csrfProtection, logoutUser);
