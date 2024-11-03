@@ -92,6 +92,10 @@ app.use((req, res, next) => {
 // Rate limiter middleware
 app.use('/api/', limiter);
 
+app.get('/', (req, res) => {
+    res.send('Welcome to the API root endpoint ms1');
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/protected', protectedRoutes);
